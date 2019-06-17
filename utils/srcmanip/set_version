@@ -34,6 +34,10 @@ _FILES_AND_PATTERNS = [
     ('tools/dptools/setup.py',
      r'version\s*=\s*([\'"]){}\1'.format(_VERSION_PATTERN),
      "version='{version}'"),
+    #
+    ('api/mm/make.build',
+     r'Version:\s*{}'.format(_VERSION_PATTERN),
+     "Version: {version}"),
 ]
 
 

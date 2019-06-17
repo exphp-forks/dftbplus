@@ -17,14 +17,51 @@ SRCDIRS += $(ROOT)/prog/dftb+/include
 INCDIRS := $(ROOT)/prog/dftb+/include
 include $(ROOT)/prog/dftb+/make.common
 
+HEADER = $(ROOT)/api/mm/dftbplus.h
+LIB_FLAG = -ldftb+
+
+DEPLIB_PATHS =
+LIB_INCLUDED =
+
+DEPLIB_PATHS += $(BUILDDIR)/external/xmlf90/libxmlf90.a
+LIB_INCLUDED += -lxmlf90
+
+# optional DFTD3 library
+ifeq ($(strip $(WITH_DFTD3)),1)
+  DEPLIB_PATHS += $(BUILDDIR)/external/dftd3/libdftd3.a
+  LIB_INCLUDED += -ldftd3
+endif
+
+define pkgconfig_file
+prefix=$(INSTALLDIR)
+exec_prefix=$${prefix}
+libdir=$${exec_prefix}/lib
+deps_libdir=$${exec_prefix}/lib/dftb+
+includedir=$${prefix}/include
+api_version=$(shell cat $(ROOT)/api/mm/API_VERSION)
+
+Name: DFTB+
+Description: C library for DFTB+, a fast and efficient versatile quantum mechanical simulation software package.
+Version: 18.2
+Requires.private:
+Libs: -L$${libdir} $(LIB_FLAG) -L$${deps_libdir} $(LIB_INCLUDED)
+Libs.private: $(LIB_LAPACK) $(OTHERLIBS) $(OTHERLIBS_C)
+Cflags: -I$${includedir}
+endef
+
 libdftb+.a: $(dftbplus.o)
 	ar r $@ $(filter-out _%,$^)
 
-install: $(TARGETS)
-	mkdir -p $(INSTALLDIR)/lib
-	cp $^ $(INSTALLDIR)/lib
+export pkgconfig_file
+install: $(TARGETS) $(DEPLIB_PATHS)
+	mkdir -p $(INSTALLDIR)/lib/dftb+
+	mkdir -p $(INSTALLDIR)/lib/pkgconfig
+	cp $< $(INSTALLDIR)/lib
 	mkdir -p $(INSTALLDIR)/include
 	cp *.mod $(INSTALLDIR)/include
+	cp $(HEADER) $(INSTALLDIR)/include
+	cp $(DEPLIB_PATHS) $(INSTALLDIR)/lib/dftb+
+	echo "$$pkgconfig_file" > $(INSTALLDIR)/lib/pkgconfig/libdftb+.pc
 
 # Tests for incompatible compile options
 
